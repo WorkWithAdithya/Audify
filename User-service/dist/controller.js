@@ -1,45 +1,57 @@
-import trycatch from './trycatch.js';
-import { User } from './model.js';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-export const registerUser = trycatch(async (req, res) => {
+import { User } from "./model.js";
+import TryCatch from "./trycatch.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+export const registerUser = TryCatch(async (req, res) => {
     const { name, email, password } = req.body;
     let user = await User.findOne({ email });
     if (user) {
-        res.status(400).json({ message: 'User already exists' });
+        res.status(400).json({
+            message: "User Already exists",
+        });
         return;
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user = await User.create({ name, email, password: hashedPassword });
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SEC, { expiresIn: "7d",
+    const hashPassword = await bcrypt.hash(password, 10);
+    user = await User.create({
+        name,
+        email,
+        password: hashPassword,
     });
-    res.status(201).json({ message: "User registered",
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SEC, {
+        expiresIn: "7d",
+    });
+    res.status(201).json({
+        message: "User Registered",
         user,
         token,
     });
 });
-export const loginUser = trycatch(async (req, res) => {
+export const loginUser = TryCatch(async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
         res.status(404).json({
-            message: 'User not exist',
+            message: "User not exists",
         });
         return;
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        res.status(400).json({ message: 'Invalid password' });
+        res.status(400).json({
+            message: "Invalid Password",
+        });
         return;
     }
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SEC, { expiresIn: "7d",
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SEC, {
+        expiresIn: "7d",
     });
-    res.status(200).json({ message: "User logged in",
+    res.status(200).json({
+        message: "Logged IN",
         user,
         token,
     });
 });
-export const myProfile = trycatch(async (req, res) => {
+export const myProfile = TryCatch(async (req, res) => {
     const user = req.user;
     res.json(user);
 });

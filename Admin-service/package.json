@@ -8,21 +8,30 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "cnodemon --watch src --exec ts-node --esm src/index.ts"
+    "dev": "concurrently \"tsc -w\" \"nodemon dist/index.js\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "@types/cors": "^2.8.19",
     "@types/dotenv": "^8.2.3",
-    "@types/express": "^5.0.3",
-    "cloudinary": "^2.7.0",
-    "dotenv": "^17.2.2",
-    "express": "^5.1.0"
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.13",
+    "@types/redis": "^4.0.11",
+    "axios": "^1.12.2",
+    "cloudinary": "^2.5.1",
+    "cors": "^2.8.5",
+    "datauri": "^4.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "redis": "^4.7.1"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
-    "nodemon": "^3.1.10",
-    "typescript": "^5.9.2"
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.9",
+    "typescript": "^5.7.3"
   }
 }
