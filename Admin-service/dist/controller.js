@@ -122,7 +122,7 @@ export const addThumbnail = TryCatch(async (req, res) => {
         console.log("Cache invalidated for songs");
     }
     res.json({
-        message: "Thumbnail Added",
+        message: "Thumbnail added",
         song: result[0],
     });
 });
@@ -152,7 +152,7 @@ export const deleteAlbum = TryCatch(async (req, res) => {
         console.log("Cache invalidated for songs");
     }
     res.json({
-        message: "Album Deleted successfully",
+        message: "Album deleted successfully",
     });
 });
 export const deleteSong = TryCatch(async (req, res) => {
@@ -170,12 +170,12 @@ export const deleteSong = TryCatch(async (req, res) => {
         });
         return;
     }
-    await sql `DELETE FROM songs WHERE id = ${id}`;
+    await sql `DELETE FROM  songs WHERE id = ${id}`;
     if (redisClient.isReady) {
         await redisClient.del("songs");
         console.log("Cache invalidated for songs");
     }
     res.json({
-        message: "Song Deleted successfully",
+        message: "Song deleted successfully",
     });
 });

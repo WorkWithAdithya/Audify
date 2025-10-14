@@ -1,3 +1,4 @@
+
 import { Request } from "express";
 import TryCatch from "./TryCatch.js";
 import getBuffer from "./config/dataUri.js";
@@ -5,16 +6,12 @@ import cloudinary from "cloudinary";
 import { sql } from "./config/db.js";
 import { redisClient } from "./index.js";
 
-
 interface AuthencatedRequest extends Request {
   user?: {
     _id: string;
     role: string;
   };
 }
-
-
-
 
 export const addAlbum = TryCatch(async (req: AuthencatedRequest, res) => {
   if (req.user?.role !== "admin") {
@@ -52,18 +49,16 @@ export const addAlbum = TryCatch(async (req: AuthencatedRequest, res) => {
    INSERT INTO albums (title, description, thumbnail) VALUES (${title}, ${description}, ${cloud.secure_url}) RETURNING *
   `;
 
-  if(redisClient.isReady){
+  if (redisClient.isReady) {
     await redisClient.del("albums");
-    console.log("Cache invalidated for albums");}
+    console.log("Cache invalidated for albums");
+  }
 
   res.json({
     message: "Album Created",
     album: result[0],
   });
 });
-
-
-
 
 export const addSong = TryCatch(async (req: AuthencatedRequest, res) => {
   if (req.user?.role !== "admin") {
@@ -112,36 +107,34 @@ export const addSong = TryCatch(async (req: AuthencatedRequest, res) => {
     (${title}, ${description}, ${cloud.secure_url}, ${album})
   `;
 
-   if(redisClient.isReady){
+  if (redisClient.isReady) {
     await redisClient.del("songs");
-    console.log("Cache invalidated for songs");}
+    console.log("Cache invalidated for songs");
+  }
 
   res.json({
     message: "Song Added",
   });
 });
 
+export const addThumbnail = TryCatch(async (req: AuthencatedRequest, res) => {
+  if (req.user?.role !== "admin") {
+    res.status(401).json({
+      message: "You are not admin",
+    });
+    return;
+  }
 
+  const song = await sql`SELECT * FROM songs WHERE id = ${req.params.id}`;
 
+  if (song.length === 0) {
+    res.status(404).json({
+      message: "No song with this id",
+    });
+    return;
+  }
 
-export const addThumbnail = TryCatch(
-  async (req: AuthencatedRequest, res) => {
-    if (req.user?.role !== "admin") {
-      res.status(401).json({
-        message: "You are not admin",
-      });
-      return;
-    }
-    const song = await sql`SELECT * FROM songs WHERE id = ${req.params.id}`;
-    
-    if (song.length === 0) {
-      res.status(404).json({
-        message: "No song with this id",
-      });
-      return;
-    }
-
-     const file = req.file;
+  const file = req.file;
 
   if (!file) {
     res.status(400).json({
@@ -159,93 +152,88 @@ export const addThumbnail = TryCatch(
     return;
   }
 
-  const cloud = await cloudinary.v2.uploader.upload(fileBuffer.content)
+  const cloud = await cloudinary.v2.uploader.upload(fileBuffer.content);
 
   const result = await sql`
     UPDATE songs SET thumbnail = ${cloud.secure_url} WHERE id = ${req.params.id} RETURNING *
   `;
 
-    if(redisClient.isReady){
+  if (redisClient.isReady) {
     await redisClient.del("songs");
-    console.log("Cache invalidated for songs");}
-
+    console.log("Cache invalidated for songs");
+  }
 
   res.json({
-    message: "Thumbnail Added",
-    song: result[0],});
-
+    message: "Thumbnail added",
+    song: result[0],
   });
+});
 
+export const deleteAlbum = TryCatch(async (req: AuthencatedRequest, res) => {
+  if (req.user?.role !== "admin") {
+    res.status(401).json({
+      message: "You are not admin",
+    });
+    return;
+  }
 
+  const { id } = req.params;
 
+  const isAlbum = await sql`SELECT * FROM albums WHERE id = ${id}`;
 
-  export const deleteAlbum = TryCatch(async (req: AuthencatedRequest, res) => {
-     if (req.user?.role !== "admin") {
-      res.status(401).json({
-        message: "You are not admin",
-      });
-      return;
-    }
-
-    const {id} = req.params;
-
-    const isAlbum = await sql`SELECT * FROM albums WHERE id = ${id}`;
-
-    if (isAlbum.length === 0) {
+  if (isAlbum.length === 0) {
     res.status(404).json({
       message: "No album with this id",
     });
     return;
   }
-    await sql`DELETE FROM songs WHERE album_id = ${id}`;
 
-    await sql`DELETE FROM albums WHERE id = ${id}`;
+  await sql`DELETE FROM songs WHERE album_id = ${id}`;
 
-     if(redisClient.isReady){
+  await sql`DELETE FROM albums WHERE id = ${id}`;
+
+  if (redisClient.isReady) {
     await redisClient.del("albums");
-    console.log("Cache invalidated for albums");}
+    console.log("Cache invalidated for albums");
+  }
 
-
-    if(redisClient.isReady){
+  if (redisClient.isReady) {
     await redisClient.del("songs");
-    console.log("Cache invalidated for songs");}
-    
-    res.json({
-      message: "Album Deleted successfully",
-    });
+    console.log("Cache invalidated for songs");
+  }
 
+  res.json({
+    message: "Album deleted successfully",
   });
+});
 
-  export const deleteSong = TryCatch(async (req: AuthencatedRequest, res) => {
-     if (req.user?.role !== "admin") {
-      res.status(401).json({
-        message: "You are not admin",
-      });
-      return;
-    }
-      const {id} = req.params;
+export const deleteSong = TryCatch(async (req: AuthencatedRequest, res) => {
+  if (req.user?.role !== "admin") {
+    res.status(401).json({
+      message: "You are not admin",
+    });
+    return;
+  }
 
-      const song = await sql`SELECT * FROM songs WHERE id = ${id}`;
-    
-    if (song.length === 0) {
-      res.status(404).json({
-        message: "No song with this id",
-      });
-      return;
-    }
+  const { id } = req.params;
 
-      await sql`DELETE FROM songs WHERE id = ${id}`;
+  const song = await sql`SELECT * FROM songs WHERE id = ${id}`;
 
-    
+  if (song.length === 0) {
+    res.status(404).json({
+      message: "No song with this id",
+    });
+    return;
+  }
 
+  await sql`DELETE FROM  songs WHERE id = ${id}`;
 
-    if(redisClient.isReady){
+  if (redisClient.isReady) {
     await redisClient.del("songs");
-    console.log("Cache invalidated for songs");}
+    console.log("Cache invalidated for songs");
+  }
 
-      res.json({
-        message: "Song Deleted successfully",
-      });
-
-      
-     });
+  res.json({
+    message: "Song deleted successfully",
+  });
+});
