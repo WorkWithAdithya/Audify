@@ -1,9 +1,9 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import songRoutes from './route.js';
-import redis from 'redis';
-import cors from 'cors';
-dotenv.config();
+import express from "express";
+import doetnv from "dotenv";
+import songRoutes from "./route.js";
+import redis from "redis";
+import cors from "cors";
+doetnv.config();
 export const redisClient = redis.createClient({
     password: process.env.Redis_Password || "",
     socket: {
@@ -11,15 +11,14 @@ export const redisClient = redis.createClient({
         port: 17220,
     }
 });
-redisClient.connect().then(() => {
-    console.log("Connected to Redis");
-}).catch((err) => {
-    console.error("Redis connection error:", err);
-});
+redisClient
+    .connect()
+    .then(() => console.log("connected to redis"))
+    .catch(console.error);
 const app = express();
 app.use(cors());
 app.use("/api/v1", songRoutes);
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-    console.log(`Song service is running on port ${PORT}`);
+const port = process.env.PORT;
+app.listen(port, () => {
+    console.log(`server is running on ${port}`);
 });

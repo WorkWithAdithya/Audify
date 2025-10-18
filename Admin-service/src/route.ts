@@ -6,7 +6,6 @@ import {
   addThumbnail,
   deleteAlbum,
   deleteSong,
-
 } from "./controller.js";
 
 const router = express.Router();

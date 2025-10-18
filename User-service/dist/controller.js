@@ -55,3 +55,36 @@ export const myProfile = TryCatch(async (req, res) => {
     const user = req.user;
     res.json(user);
 });
+export const addToPlaylist = TryCatch(async (req, res) => {
+    const userId = req.user?._id;
+    const songId = req.params.id;
+    // Check if videoId exists first
+    if (!songId) {
+        res.status(400).json({
+            message: "SongID is required",
+        });
+        return;
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+        res.status(404).json({
+            message: "NO user with this id",
+        });
+        return;
+    }
+    // Now TypeScript knows videoId is a string
+    if (user.playlist.includes(songId)) {
+        const index = user.playlist.indexOf(songId);
+        user.playlist.splice(index, 1);
+        await user.save();
+        res.json({
+            message: "Removed from playlist",
+        });
+        return;
+    }
+    user.playlist.push(songId);
+    await user.save();
+    res.json({
+        message: "Added to PlayList",
+    });
+});

@@ -17,5 +17,13 @@ const schema = new Schema({
         type: String,
         default: "user",
     },
+    playlist: [
+        {
+            type: String,
+            required: true,
+        },
+    ],
+}, {
+    timestamps: true,
 });
 export const User = mongoose.model("User", schema);

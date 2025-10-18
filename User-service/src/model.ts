@@ -1,3 +1,4 @@
+
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IUser extends Document {
@@ -5,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: string;
+  playlist: string[];
 }
 
 const schema: Schema<IUser> = new Schema(
@@ -27,6 +29,15 @@ const schema: Schema<IUser> = new Schema(
       default: "user",
     },
 
+    playlist: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+  },
+  {
+    timestamps: true,
   }
 );
 
