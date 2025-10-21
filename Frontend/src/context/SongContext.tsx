@@ -36,6 +36,8 @@ interface SongContextType{
     albumSong:Song[];
     albumData:Album | null;
     fetchAlbumsongs : (id:string)=>Promise<void>
+    fetchSongs:() =>Promise<void>
+    fetchAlbums: () =>Promise<void>
 
 
 
@@ -149,7 +151,9 @@ export const SongProvider : React.FC<SongProviderProps> =
             fetchSongs()
             fetchAlbums()
         },[])
-        return (<SongContext.Provider value={{songs , selectedSong , setSelectedSong , isPlaying ,setIsPlaying , loading , albums , fetchSingleSong,song , nextSong , prevSong , fetchAlbumsongs, albumData , albumSong}}>
+        return (<SongContext.Provider value={{songs , selectedSong , setSelectedSong , isPlaying ,setIsPlaying , loading , albums , fetchSingleSong,song , nextSong , prevSong , fetchAlbumsongs, albumData , albumSong
+            ,fetchAlbums, fetchSongs
+        }}>
             {children}
         </SongContext.Provider>
         )
