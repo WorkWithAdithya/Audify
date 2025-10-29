@@ -1,9 +1,11 @@
 import React from 'react'
-import { FaBookmark, FaPlay, FaShoppingCart } from 'react-icons/fa'
+import { FaBookmark, FaPlay, FaShoppingCart, FaDownload } from 'react-icons/fa'
 import { useUserData } from '../context/UserContext'
 import { useSongData } from '../context/SongContext'
 import { useCart } from '../context/CartContext'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import axios from 'axios'
 
 interface SongCardProps{
     image:string,
@@ -24,7 +26,6 @@ const SongCard: React.FC<SongCardProps> = ({image , name , description ,id, pric
   }
 
   const handlePlayClick = () => {
-    // Play any song - no restrictions
     console.log("🎵 Play button clicked!");
     console.log("Song ID:", id);
     console.log("Song Name:", name);
@@ -33,6 +34,48 @@ const SongCard: React.FC<SongCardProps> = ({image , name , description ,id, pric
     setIsPlaying(true)
     
     console.log("✅ setSelectedSong and setIsPlaying called");
+  }
+
+  const handleDownload = async () => {
+    if (!isAuth) {
+      toast.error("Please login to download");
+      navigate("/login");
+      return;
+    }
+
+    if (!hasPurchased) {
+      toast.error("Please purchase this song to download");
+      return;
+    }
+
+    try {
+      toast.loading("Preparing download...");
+      
+      // Get the song details with audio URL
+      const { data } = await axios.get(`http://localhost:8000/api/v1/song/${id}`);
+      
+      if (!data.audio) {
+        toast.dismiss();
+        toast.error("Audio file not available");
+        return;
+      }
+
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = data.audio;
+      link.download = `${name}.mp3`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.dismiss();
+      toast.success(`Downloading ${name}...`);
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to download song");
+      console.error("Download error:", error);
+    }
   }
 
   const handleAddToCart = () => {
@@ -101,7 +144,7 @@ const SongCard: React.FC<SongCardProps> = ({image , name , description ,id, pric
             </div>
 
             <div className='absolute inset-0 flex items-center justify-center gap-3'>
-              {/* Play Button - ALWAYS SHOW (same green color for all) */}
+              {/* Play Button - ALWAYS SHOW */}
               <button 
                 className='bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-[0_0_20px_rgba(34,197,94,0.6)] text-white p-4 rounded-full opacity-0 group-hover/image:opacity-100 transform translate-y-4 group-hover/image:translate-y-0 transition-all duration-500 hover:scale-110 active:scale-95 z-10'
                 onClick={handlePlayClick}
@@ -109,6 +152,17 @@ const SongCard: React.FC<SongCardProps> = ({image , name , description ,id, pric
               >
                 <FaPlay className='w-5 h-5'/>
               </button>
+
+              {/* Download Button (Only for Purchased Songs) */}
+              {hasPurchased && (
+                <button 
+                  className='bg-gradient-to-r from-blue-500 to-cyan-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] text-white p-4 rounded-full opacity-0 group-hover/image:opacity-100 transform translate-y-4 group-hover/image:translate-y-0 transition-all duration-500 hover:scale-110 active:scale-95 z-10 delay-75'
+                  onClick={handleDownload}
+                  title='Download song'
+                >
+                  <FaDownload className='w-5 h-5'/>
+                </button>
+              )}
 
               {/* Add to Cart Button (Only for Paid & Not Purchased) */}
               {!isFree && !hasPurchased && (

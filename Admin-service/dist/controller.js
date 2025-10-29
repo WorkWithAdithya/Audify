@@ -3,188 +3,257 @@ import getBuffer from "./config/dataUri.js";
 import cloudinary from "cloudinary";
 import { sql } from "./config/db.js";
 import { redisClient } from "./index.js";
-// util: coerce/validate price without changing your behavior
-const toPrice = (value) => {
-    if (value === undefined || value === null || value === "")
-        return NaN;
-    if (typeof value === "number")
-        return value;
-    const n = parseFloat(String(value));
-    return Number.isFinite(n) ? n : NaN;
-};
 export const addAlbum = TryCatch(async (req, res) => {
     if (req.user?.role !== "admin") {
-        return res.status(401).json({ message: "You are not admin" });
+        res.status(401).json({
+            message: "You are not admin",
+        });
+        return;
     }
-    const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
-    const description = typeof req.body?.description === "string" ? req.body.description.trim() : "";
+    const { title, description } = req.body;
     const file = req.file;
     if (!file) {
-        return res.status(400).json({ message: "No file to upload" });
+        res.status(400).json({
+            message: "No file to upload",
+        });
+        return;
     }
     const fileBuffer = getBuffer(file);
     if (!fileBuffer || !fileBuffer.content) {
-        return res.status(500).json({ message: "Failed to generate file buffer" });
+        res.status(500).json({
+            message: "Failed to generate file buffer",
+        });
+        return;
     }
-    // Explicit for clarity; Cloudinary default is image, but we make it clear
     const cloud = await cloudinary.v2.uploader.upload(fileBuffer.content, {
         folder: "albums",
-        resource_type: "image",
     });
     const result = await sql `
-    INSERT INTO albums (title, description, thumbnail)
-    VALUES (${title}, ${description}, ${cloud.secure_url})
-    RETURNING *
+   INSERT INTO albums (title, description, thumbnail) 
+   VALUES (${title}, ${description}, ${cloud.secure_url}) 
+   RETURNING *
   `;
-    if (redisClient?.isReady) {
+    if (redisClient.isReady) {
         await redisClient.del("albums");
+        console.log("Cache invalidated for albums");
     }
-    return res.json({
+    res.json({
         message: "Album Created",
         album: result[0],
     });
 });
 export const addSong = TryCatch(async (req, res) => {
     if (req.user?.role !== "admin") {
-        return res.status(401).json({ message: "You are not admin" });
+        res.status(401).json({
+            message: "You are not admin",
+        });
+        return;
     }
-    const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
-    const description = typeof req.body?.description === "string" ? req.body.description.trim() : "";
-    const album = typeof req.body?.album === "string" ? req.body.album.trim() : req.body?.album;
+    const { title, description, album, price } = req.body;
     // Validate required fields
     if (!title || !description || !album) {
-        return res.status(400).json({
+        res.status(400).json({
             message: "Title, description, and album are required",
         });
+        return;
     }
     const isAlbum = await sql `SELECT * FROM albums WHERE id = ${album}`;
     if (isAlbum.length === 0) {
-        return res.status(404).json({ message: "No album with this id" });
+        res.status(404).json({
+            message: "No album with this id",
+        });
+        return;
     }
     const file = req.file;
     if (!file) {
-        return res.status(400).json({ message: "No file to upload" });
+        res.status(400).json({
+            message: "No file to upload",
+        });
+        return;
     }
     const fileBuffer = getBuffer(file);
     if (!fileBuffer || !fileBuffer.content) {
-        return res.status(500).json({ message: "Failed to generate file buffer" });
+        res.status(500).json({
+            message: "Failed to generate file buffer",
+        });
+        return;
     }
-    // Critical for audio in Cloudinary: use 'video' pipeline
     const cloud = await cloudinary.v2.uploader.upload(fileBuffer.content, {
         folder: "songs",
         resource_type: "video",
     });
-    // Keep your original price logic (default 0.0 if not sent)
-    const songPrice = req.body?.price !== undefined ? toPrice(req.body.price) : 0.0;
-    if (!Number.isFinite(songPrice) || songPrice < 0) {
-        return res.status(400).json({ message: "Invalid price value" });
+    // Parse and validate price
+    const songPrice = price ? parseFloat(price) : 0.0;
+    if (isNaN(songPrice) || songPrice < 0) {
+        res.status(400).json({
+            message: "Invalid price value",
+        });
+        return;
     }
     const result = await sql `
-    INSERT INTO songs (title, description, audio, album_id, price)
+    INSERT INTO songs (title, description, audio, album_id, price) 
     VALUES (${title}, ${description}, ${cloud.secure_url}, ${album}, ${songPrice})
     RETURNING *
   `;
-    if (redisClient?.isReady) {
+    // CRITICAL FIX: Clear both general songs cache AND album-specific cache
+    if (redisClient.isReady) {
         await redisClient.del("songs");
+        await redisClient.del(`album_songs_${album}`); // This is the key fix!
+        console.log(`Cache invalidated for songs and album_songs_${album}`);
     }
-    return res.json({
+    res.json({
         message: "Song Added",
         song: result[0],
     });
 });
 export const addThumbnail = TryCatch(async (req, res) => {
     if (req.user?.role !== "admin") {
-        return res.status(401).json({ message: "You are not admin" });
+        res.status(401).json({
+            message: "You are not admin",
+        });
+        return;
     }
-    const songId = typeof req.params?.id === "string" ? req.params.id.trim() : req.params?.id;
-    const song = await sql `SELECT * FROM songs WHERE id = ${songId}`;
+    const song = await sql `SELECT * FROM songs WHERE id = ${req.params.id}`;
     if (song.length === 0) {
-        return res.status(404).json({ message: "No song with this id" });
+        res.status(404).json({
+            message: "No song with this id",
+        });
+        return;
     }
     const file = req.file;
     if (!file) {
-        return res.status(400).json({ message: "No file to upload" });
+        res.status(400).json({
+            message: "No file to upload",
+        });
+        return;
     }
     const fileBuffer = getBuffer(file);
     if (!fileBuffer || !fileBuffer.content) {
-        return res.status(500).json({ message: "Failed to generate file buffer" });
+        res.status(500).json({
+            message: "Failed to generate file buffer",
+        });
+        return;
     }
     const cloud = await cloudinary.v2.uploader.upload(fileBuffer.content);
     const result = await sql `
-    UPDATE songs
-    SET thumbnail = ${cloud.secure_url}
-    WHERE id = ${songId}
+    UPDATE songs SET thumbnail = ${cloud.secure_url} 
+    WHERE id = ${req.params.id} 
     RETURNING *
   `;
-    if (redisClient?.isReady) {
+    // Clear cache for the album this song belongs to
+    const songData = song[0];
+    if (redisClient.isReady) {
         await redisClient.del("songs");
+        if (songData?.album_id) {
+            await redisClient.del(`album_songs_${songData.album_id}`);
+        }
+        console.log("Cache invalidated for songs");
     }
-    return res.json({
+    res.json({
         message: "Thumbnail added",
         song: result[0],
     });
 });
 export const updateSongPrice = TryCatch(async (req, res) => {
     if (req.user?.role !== "admin") {
-        return res.status(401).json({ message: "You are not admin" });
+        res.status(401).json({
+            message: "You are not admin",
+        });
+        return;
     }
-    const id = typeof req.params?.id === "string" ? req.params.id.trim() : req.params?.id;
+    const { id } = req.params;
     const { price } = req.body;
     if (price === undefined || price === null) {
-        return res.status(400).json({ message: "Price is required" });
+        res.status(400).json({
+            message: "Price is required",
+        });
+        return;
     }
-    const songPrice = toPrice(price);
-    if (!Number.isFinite(songPrice) || songPrice < 0) {
-        return res.status(400).json({ message: "Invalid price value" });
+    const songPrice = parseFloat(price);
+    if (isNaN(songPrice) || songPrice < 0) {
+        res.status(400).json({
+            message: "Invalid price value",
+        });
+        return;
     }
     const song = await sql `SELECT * FROM songs WHERE id = ${id}`;
     if (song.length === 0) {
-        return res.status(404).json({ message: "No song with this id" });
+        res.status(404).json({
+            message: "No song with this id",
+        });
+        return;
     }
     const result = await sql `
-    UPDATE songs
-    SET price = ${songPrice}
-    WHERE id = ${id}
-    RETURNING *
-  `;
-    if (redisClient?.isReady) {
+      UPDATE songs SET price = ${songPrice} 
+      WHERE id = ${id} 
+      RETURNING *
+    `;
+    // Clear cache for the album this song belongs to
+    const songData = song[0];
+    if (redisClient.isReady) {
         await redisClient.del("songs");
+        if (songData?.album_id) {
+            await redisClient.del(`album_songs_${songData.album_id}`);
+        }
+        console.log("Cache invalidated for songs");
     }
-    return res.json({
+    res.json({
         message: "Song price updated",
         song: result[0],
     });
 });
 export const deleteAlbum = TryCatch(async (req, res) => {
     if (req.user?.role !== "admin") {
-        return res.status(401).json({ message: "You are not admin" });
+        res.status(401).json({
+            message: "You are not admin",
+        });
+        return;
     }
-    const id = typeof req.params?.id === "string" ? req.params.id.trim() : req.params?.id;
+    const { id } = req.params;
     const isAlbum = await sql `SELECT * FROM albums WHERE id = ${id}`;
     if (isAlbum.length === 0) {
-        return res.status(404).json({ message: "No album with this id" });
+        res.status(404).json({
+            message: "No album with this id",
+        });
+        return;
     }
-    // Keep your cascade behavior (delete songs then album)
     await sql `DELETE FROM songs WHERE album_id = ${id}`;
     await sql `DELETE FROM albums WHERE id = ${id}`;
-    if (redisClient?.isReady) {
+    if (redisClient.isReady) {
         await redisClient.del("albums");
         await redisClient.del("songs");
+        await redisClient.del(`album_songs_${id}`); // Clear album-specific cache
+        console.log("Cache invalidated for albums and songs");
     }
-    return res.json({ message: "Album deleted successfully" });
+    res.json({
+        message: "Album deleted successfully",
+    });
 });
 export const deleteSong = TryCatch(async (req, res) => {
     if (req.user?.role !== "admin") {
-        return res.status(401).json({ message: "You are not admin" });
+        res.status(401).json({
+            message: "You are not admin",
+        });
+        return;
     }
-    const id = typeof req.params?.id === "string" ? req.params.id.trim() : req.params?.id;
+    const { id } = req.params;
     const song = await sql `SELECT * FROM songs WHERE id = ${id}`;
     if (song.length === 0) {
-        return res.status(404).json({ message: "No song with this id" });
+        res.status(404).json({
+            message: "No song with this id",
+        });
+        return;
     }
+    const songData = song[0];
     await sql `DELETE FROM songs WHERE id = ${id}`;
-    if (redisClient?.isReady) {
+    if (redisClient.isReady) {
         await redisClient.del("songs");
+        if (songData?.album_id) {
+            await redisClient.del(`album_songs_${songData.album_id}`); // Clear album-specific cache
+        }
+        console.log("Cache invalidated for songs");
     }
-    return res.json({ message: "Song deleted successfully" });
+    res.json({
+        message: "Song deleted successfully",
+    });
 });

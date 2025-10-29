@@ -52,7 +52,7 @@ const PlayList = () => {
               <Loading />
             ) : (
               <>
-                <div className="mt-6 sm:mt-8 md:mt-10 flex gap-4 sm:gap-6 md:gap-8 flex-col md:flex-row md:items-center">
+                <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10 mb-10 bg-gray-900/40 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-gray-800">
                   <div className="relative group">
                     <img
                       src={"/playlist.png"}

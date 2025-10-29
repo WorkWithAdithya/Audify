@@ -8,70 +8,80 @@ const Navbar = () => {
   const { isAuth, logoutUser } = useUserData()
   const { cartCount } = useCart()
 
-  const logoutUserHandler = () =>{
+  const logoutUserHandler = () => {
     logoutUser()
   }
 
   return (
-    <>
-      <div className="w-full flex justify-between items-center font-semibold">
-        <div className="flex items-center gap-2 sm:gap-3">
+    <nav className="w-full backdrop-blur-lg bg-white/10 border-b border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+      <div className="flex justify-between items-center px-6 md:px-10 py-3">
+        
+        {/* Navigation Arrows */}
+        <div className="flex items-center gap-4">
           <img
             src="/left_arrow.png"
-            className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-xl bg-gradient-to-br from-gray-900 via-black to-gray-900 hover:from-purple-900/30 hover:via-black hover:to-cyan-900/30 cursor-pointer backdrop-blur-xl border border-gray-800/50 hover:border-purple-500/50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/20"
+            className="w-8 h-8 p-1 cursor-pointer rounded-full bg-white/10 hover:bg-white/20 transition duration-300 shadow-md hover:scale-105 active:scale-95"
             onClick={() => navigate(-1)}
+            alt="Go back"
           />
 
           <img
             src="/right_arrow.png"
-            className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-xl bg-gradient-to-br from-gray-900 via-black to-gray-900 hover:from-cyan-900/30 hover:via-black hover:to-purple-900/30 cursor-pointer backdrop-blur-xl border border-gray-800/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/20"
+            className="w-8 h-8 p-1 cursor-pointer rounded-full bg-white/10 hover:bg-white/20 transition duration-300 shadow-md hover:scale-105 active:scale-95"
             onClick={() => navigate(+1)}
+            alt="Go forward"
           />
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Right Controls */}
+        <div className="flex items-center gap-3 md:gap-5 text-white text-sm md:text-base">
+          
           {/* Cart Button */}
           {isAuth && (
             <button
               onClick={() => navigate("/cart")}
-              className="relative px-4 sm:px-5 py-1.5 sm:py-2 cursor-pointer bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 text-white text-sm sm:text-base font-bold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/50 border border-purple-400/30 flex items-center gap-2"
+              className="relative flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500/30 to-purple-600/30 hover:from-indigo-500/50 hover:to-purple-600/50 backdrop-blur-md transition-all duration-300 hover:scale-105 shadow-[0_0_15px_rgba(79,70,229,0.3)]"
             >
-              <FaShoppingCart className="text-sm sm:text-base" />
+              <FaShoppingCart className="text-lg" />
               <span className="hidden sm:inline">Cart</span>
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                <span className="absolute -top-2 -right-2 bg-pink-500 text-xs px-2 py-0.5 rounded-full text-white font-semibold animate-bounce">
                   {cartCount}
                 </span>
               )}
             </button>
           )}
 
-          {/* My Purchases Button */}
+          {/* My Purchases */}
           {isAuth && (
             <button
               onClick={() => navigate("/my-purchases")}
-              className="px-4 sm:px-5 py-1.5 sm:py-2 cursor-pointer bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:via-orange-600 hover:to-red-600 text-white text-sm sm:text-base font-bold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-orange-500/50 border border-orange-400/30 flex items-center gap-2"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/30 to-blue-600/30 hover:from-cyan-500/50 hover:to-blue-600/50 backdrop-blur-md transition-all duration-300 hover:scale-105 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
             >
-              <FaShoppingBag className="text-sm sm:text-base" />
+              <FaShoppingBag className="text-lg" />
               <span className="hidden sm:inline">My Purchases</span>
             </button>
           )}
 
+          {/* Auth Action */}
           {isAuth ? (
-            <p onClick={logoutUserHandler} className="px-4 sm:px-6 py-1.5 sm:py-2 cursor-pointer bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 hover:from-red-600 hover:via-pink-600 hover:to-purple-600 text-white text-sm sm:text-base font-bold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-pink-500/50 border border-pink-400/30">
+            <p
+              onClick={logoutUserHandler}
+              className="cursor-pointer px-3 md:px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-red-400 font-medium transition-all duration-300 hover:scale-105 shadow-[0_0_10px_rgba(255,255,255,0.15)]"
+            >
               Logout
             </p>
           ) : (
             <p
               onClick={() => navigate("/login")}
-              className="px-4 sm:px-6 py-1.5 sm:py-2 cursor-pointer bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:from-cyan-500 hover:via-blue-600 hover:to-purple-700 text-white text-sm sm:text-base font-bold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/50 border border-cyan-400/30"
+              className="cursor-pointer px-3 md:px-4 py-2 rounded-xl bg-gradient-to-r from-green-400/30 to-emerald-600/30 hover:from-green-400/50 hover:to-emerald-600/50 text-green-300 font-medium transition-all duration-300 hover:scale-105 shadow-[0_0_10px_rgba(34,197,94,0.3)]"
             >
               Login
             </p>
           )}
         </div>
       </div>
-    </>
+    </nav>
   )
 }
 

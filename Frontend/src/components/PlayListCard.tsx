@@ -1,23 +1,28 @@
 import { FaMusic } from "react-icons/fa"
 import { useUserData } from "../context/UserContext"
 
-
 const PlayListCard = () => {
-  const {user , isAuth} = useUserData()
+  const { user, isAuth } = useUserData()
 
   return (
-    <div className="flex items-center p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-lg shadow-purple-900/20 cursor-pointer bg-gradient-to-br from-gray-900/80 via-black/90 to-gray-900/80 backdrop-blur-xl border border-gray-800/50 hover:border-purple-500/50 hover:bg-gradient-to-br hover:from-purple-900/30 hover:via-black hover:to-cyan-900/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/30 group">
-      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-600 via-pink-600 to-cyan-600 flex items-center justify-center rounded-lg sm:rounded-xl shadow-lg shadow-purple-500/40 group-hover:shadow-cyan-500/50 group-hover:scale-110 transition-all duration-300 group-hover:rotate-6">
-        
-        <FaMusic className="text-white text-lg sm:text-xl md:text-2xl group-hover:scale-110 transition-all duration-300" />
-        </div>
-        <div className="ml-3 sm:ml-4 flex-1">
-            <h2 className="font-bold text-sm sm:text-base md:text-lg bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent group-hover:from-cyan-400 group-hover:via-purple-400 group-hover:to-pink-400 transition-all duration-300">My playlist</h2>
-            <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mt-0.5 sm:mt-1">
-              Playlist 𖹭<span></span> {isAuth? <span className="text-purple-400 group-hover:text-cyan-400 transition-colors duration-300 font-medium">{user?.name}</span>:<span className="text-purple-400 group-hover:text-cyan-400 transition-colors duration-300 font-medium">{"User"}</span>}
-            </p>
+    <div className="group bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4 sm:p-6 rounded-2xl border border-purple-500/20 shadow-md shadow-purple-500/10 flex items-center gap-4 hover:scale-[1.02] transition-transform duration-300 backdrop-blur-md">
+      {/* Music icon */}
+      <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 text-white shadow-lg shadow-cyan-500/30">
+        <FaMusic className="text-xl sm:text-2xl animate-pulse" />
+      </div>
 
-            </div>
+      {/* Playlist info */}
+      <div className="flex flex-col">
+        <h2 className="text-base sm:text-lg font-semibold text-white tracking-wide group-hover:text-cyan-400 transition-colors duration-300">
+          My Playlist
+        </h2>
+        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-200 transition-colors duration-300 mt-0.5 sm:mt-1">
+          Playlist 𖹭{" "}
+          <span className="text-purple-400 font-medium">
+            {isAuth ? user?.name : "User"}
+          </span>
+        </p>
+      </div>
     </div>
   )
 }
