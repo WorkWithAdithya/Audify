@@ -1,12 +1,25 @@
+// src/config/dataUri.ts
 import DataUriParser from "datauri/parser.js";
-import path from "path";
+import path from "node:path";
 
-const getBuffer = (file: any) => {
-  const parser = new DataUriParser();
+type MulterFile = {
+  originalname: string;
+  buffer: Buffer;
+};
 
-  const extName = path.extname(file.originalname).toString();
+const parser = new DataUriParser();
 
-  return parser.format(extName, file.buffer);
+/**
+ * Returns a DataURI object compatible with Cloudinary's uploader when given a Multer file.
+ * Keeps your original behavior (controller checks for `.content`).
+ */
+const getBuffer = (file: MulterFile) => {
+  if (!file || !file.buffer) return null;
+
+  const ext = path.extname(file.originalname || "");
+  const safeExt = ext && ext.startsWith(".") ? ext : ".bin";
+
+  return parser.format(safeExt, file.buffer);
 };
 
 export default getBuffer;

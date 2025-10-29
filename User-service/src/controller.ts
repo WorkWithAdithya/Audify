@@ -1,19 +1,38 @@
-
 import { AuthenticatedRequest } from "./middleware.js";
 import { User } from "./model.js";
 import TryCatch from "./trycatch.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// Helper function to get JWT secret
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SEC || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SEC/JWT_SECRET environment variable is not defined");
+  }
+  return secret;
+};
+
+// Normalize email for consistency
+const normEmail = (email: string) => (email || "").trim().toLowerCase();
+
+// Remove sensitive fields before responding
+const sanitize = (u: any) => {
+  const obj = u?.toObject ? u.toObject() : { ...u };
+  if (obj?.password) delete obj.password;
+  return obj;
+};
+
 export const registerUser = TryCatch(async (req, res) => {
   const { name, email, password } = req.body;
-  let user = await User.findOne({ email });
+  const normalizedEmail = normEmail(email);
+
+  let user = await User.findOne({ email: normalizedEmail });
 
   if (user) {
     res.status(400).json({
       message: "User Already exists",
     });
-
     return;
   }
 
@@ -21,25 +40,27 @@ export const registerUser = TryCatch(async (req, res) => {
 
   user = await User.create({
     name,
-    email,
+    email: normalizedEmail,
     password: hashPassword,
   });
 
-  const token = jwt.sign({ _id: user._id }, process.env.JWT_SEC as string, {
+  const token = jwt.sign({ _id: user._id }, getJwtSecret(), {
     expiresIn: "7d",
   });
 
   res.status(201).json({
     message: "User Registered",
-    user,
+    user: sanitize(user),
     token,
   });
 });
 
 export const loginUser = TryCatch(async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = normEmail(email);
 
-  const user = await User.findOne({ email });
+  // Because password is select:false in model, explicitly select it here
+  const user = await User.findOne({ email: normalizedEmail }).select("+password");
 
   if (!user) {
     res.status(404).json({
@@ -57,21 +78,15 @@ export const loginUser = TryCatch(async (req, res) => {
     return;
   }
 
-  const token = jwt.sign({ _id: user._id }, process.env.JWT_SEC as string, {
+  const token = jwt.sign({ _id: user._id }, getJwtSecret(), {
     expiresIn: "7d",
   });
 
   res.status(200).json({
     message: "Logged IN",
-    user,
+    user: sanitize(user),
     token,
   });
-});
-
-export const myProfile = TryCatch(async (req: AuthenticatedRequest, res) => {
-  const user = req.user;
-
-  res.json(user);
 });
 
 export const addToPlaylist = TryCatch(
@@ -79,7 +94,6 @@ export const addToPlaylist = TryCatch(
     const userId = req.user?._id;
     const songId = req.params.id;
 
-    // Check if videoId exists first
     if (!songId) {
       res.status(400).json({
         message: "SongID is required",
@@ -96,12 +110,9 @@ export const addToPlaylist = TryCatch(
       return;
     }
 
-    // Now TypeScript knows videoId is a string
     if (user.playlist.includes(songId)) {
       const index = user.playlist.indexOf(songId);
-
       user.playlist.splice(index, 1);
-
       await user.save();
 
       res.json({
@@ -111,11 +122,125 @@ export const addToPlaylist = TryCatch(
     }
 
     user.playlist.push(songId);
-
     await user.save();
 
     res.json({
       message: "Added to PlayList",
+    });
+  }
+);
+
+// NEW: Get user profile (for middleware in other services)
+export const getMyProfile = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+      return;
+    }
+
+    res.json(sanitize(user));
+  }
+);
+
+// NEW: Add purchased song to user (called by Payment Service)
+// (kept your original behavior: 400 if already purchased)
+export const addPurchasedSong = TryCatch(
+  async (_req: AuthenticatedRequest, res) => {
+    const { userId, songId } = _req.body;
+
+    if (!userId || !songId) {
+      res.status(400).json({
+        message: "userId and songId are required",
+      });
+      return;
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+      return;
+    }
+
+    // Check if already purchased
+    if (user.purchasedSongs.includes(songId)) {
+      res.status(400).json({
+        message: "Song already purchased",
+      });
+      return;
+    }
+
+    user.purchasedSongs.push(songId);
+    await user.save();
+
+    res.json({
+      message: "Song added to purchased list",
+      purchasedSongs: user.purchasedSongs,
+    });
+  }
+);
+
+// NEW: Check if user has purchased a song
+export const checkPurchase = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const userId = req.user?._id;
+    const { songId } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ message: "User not authenticated" });
+      return;
+    }
+
+    if (!songId) {
+      res.status(400).json({ message: "Song ID is required" });
+      return;
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const hasPurchased = user.purchasedSongs.includes(songId as string);
+
+    res.json({
+      hasPurchased,
+      songId,
+    });
+  }
+);
+
+// NEW: Get all purchased songs
+export const getPurchasedSongs = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      res.status(401).json({
+        message: "User not authenticated",
+      });
+      return;
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+      return;
+    }
+
+    res.json({
+      purchasedSongs: user.purchasedSongs,
     });
   }
 );

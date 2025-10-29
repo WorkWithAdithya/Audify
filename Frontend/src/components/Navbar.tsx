@@ -1,9 +1,12 @@
 import { useNavigate } from "react-router-dom"
 import { useUserData } from "../context/UserContext"
+import { useCart } from "../context/CartContext"
+import { FaShoppingBag, FaShoppingCart } from "react-icons/fa"
 
 const Navbar = () => {
   const navigate = useNavigate()
   const { isAuth, logoutUser } = useUserData()
+  const { cartCount } = useCart()
 
   const logoutUserHandler = () =>{
     logoutUser()
@@ -27,6 +30,32 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
+          {/* Cart Button */}
+          {isAuth && (
+            <button
+              onClick={() => navigate("/cart")}
+              className="relative px-4 sm:px-5 py-1.5 sm:py-2 cursor-pointer bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 text-white text-sm sm:text-base font-bold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/50 border border-purple-400/30 flex items-center gap-2"
+            >
+              <FaShoppingCart className="text-sm sm:text-base" />
+              <span className="hidden sm:inline">Cart</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* My Purchases Button */}
+          {isAuth && (
+            <button
+              onClick={() => navigate("/my-purchases")}
+              className="px-4 sm:px-5 py-1.5 sm:py-2 cursor-pointer bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:via-orange-600 hover:to-red-600 text-white text-sm sm:text-base font-bold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-orange-500/50 border border-orange-400/30 flex items-center gap-2"
+            >
+              <FaShoppingBag className="text-sm sm:text-base" />
+              <span className="hidden sm:inline">My Purchases</span>
+            </button>
+          )}
 
           {isAuth ? (
             <p onClick={logoutUserHandler} className="px-4 sm:px-6 py-1.5 sm:py-2 cursor-pointer bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 hover:from-red-600 hover:via-pink-600 hover:to-purple-600 text-white text-sm sm:text-base font-bold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-pink-500/50 border border-pink-400/30">
@@ -42,8 +71,6 @@ const Navbar = () => {
           )}
         </div>
       </div>
-
-  
     </>
   )
 }

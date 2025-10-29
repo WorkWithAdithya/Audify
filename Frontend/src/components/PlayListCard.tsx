@@ -14,7 +14,7 @@ const PlayListCard = () => {
         <div className="ml-3 sm:ml-4 flex-1">
             <h2 className="font-bold text-sm sm:text-base md:text-lg bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent group-hover:from-cyan-400 group-hover:via-purple-400 group-hover:to-pink-400 transition-all duration-300">My playlist</h2>
             <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mt-0.5 sm:mt-1">
-              Playlist · {isAuth? <span className="text-purple-400 group-hover:text-cyan-400 transition-colors duration-300 font-medium">{user?.name}</span>:<span className="text-purple-400 group-hover:text-cyan-400 transition-colors duration-300 font-medium">{"User"}</span>}
+              Playlist 𖹭<span></span> {isAuth? <span className="text-purple-400 group-hover:text-cyan-400 transition-colors duration-300 font-medium">{user?.name}</span>:<span className="text-purple-400 group-hover:text-cyan-400 transition-colors duration-300 font-medium">{"User"}</span>}
             </p>
 
             </div>

@@ -23,6 +23,11 @@ const schema = new Schema({
             required: true,
         },
     ],
+    purchasedSongs: [
+        {
+            type: String,
+        },
+    ],
 }, {
     timestamps: true,
 });

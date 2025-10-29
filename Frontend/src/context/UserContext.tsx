@@ -10,6 +10,7 @@ export interface User{
     email:string,
     role:string,
     playlist:string[];
+    purchasedSongs:string[]; // NEW
 }
 
 interface UserContextType{
@@ -30,7 +31,7 @@ interface UserContextType{
     )=>Promise<void>;
     addToPlaylist:(id : string) =>void;
     logoutUser:() =>Promise<void>;
-    
+    fetchUser:() =>Promise<void>; // NEW - exposed for refreshing after purchase
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -134,7 +135,7 @@ async function addToPlaylist(id: string) {
     },[])
 
 
-    return <UserContext.Provider value={{user , loading , isAuth , btnLoading , loginUser , registerUser , addToPlaylist,logoutUser}}>{children}<Toaster/></UserContext.Provider>
+    return <UserContext.Provider value={{user , loading , isAuth , btnLoading , loginUser , registerUser , addToPlaylist,logoutUser, fetchUser}}>{children}<Toaster/></UserContext.Provider>
 
 }
 

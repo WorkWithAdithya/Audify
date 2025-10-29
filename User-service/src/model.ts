@@ -1,4 +1,3 @@
-
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IUser extends Document {
@@ -7,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   role: string;
   playlist: string[];
+  purchasedSongs: string[]; // NEW: Track purchased song IDs
 }
 
 const schema: Schema<IUser> = new Schema(
@@ -28,11 +28,15 @@ const schema: Schema<IUser> = new Schema(
       type: String,
       default: "user",
     },
-
     playlist: [
       {
         type: String,
         required: true,
+      },
+    ],
+    purchasedSongs: [
+      {
+        type: String,
       },
     ],
   },

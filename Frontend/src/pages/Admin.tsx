@@ -6,8 +6,7 @@ import { useUserData } from "../context/UserContext";
 import { useSongData } from "../context/SongContext";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { MdDelete } from "react-icons/md";
-import { Music2, Album, Home, Upload, Image, Plus, Trash2 } from "lucide-react";
+import { Music2, Album, Home, Upload, Image, Plus, Trash2, IndianRupee } from "lucide-react";
 
 const server = "http://localhost:7000";
 
@@ -20,6 +19,7 @@ const Admin = () => {
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [album, setAlbum] = useState<string>("");
+  const [price, setPrice] = useState<string>(""); // NEW
   const [file, setFile] = useState<File | null>(null);
   const [btnLoading, setBtnLoading] = useState<boolean>(false);
   const [focusedField, setFocusedField] = useState<string>("");
@@ -74,6 +74,7 @@ const Admin = () => {
     formData.append("description", description);
     formData.append("file", file);
     formData.append("album", album);
+    formData.append("price", price || "0"); // NEW - default to 0 if empty
 
     setBtnLoading(true);
 
@@ -91,6 +92,7 @@ const Admin = () => {
       setDescription("");
       setFile(null);
       setAlbum("");
+      setPrice(""); // NEW
     } catch (error: any) {
       toast.error(error.response?.data?.message || "An error occured");
       setBtnLoading(false);
@@ -166,9 +168,6 @@ const Admin = () => {
       }
     }
   };
-
-
-  
 
   useEffect(() => {
     if (user && user.role !== "admin") {
@@ -323,7 +322,7 @@ const Admin = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="relative">
                 <div className={`absolute inset-0 bg-green-500 rounded-lg blur-sm transition-opacity duration-300 ${focusedField === 'album-select' ? 'opacity-20' : 'opacity-0'}`}></div>
                 <select
@@ -344,6 +343,26 @@ const Admin = () => {
                   })}
                 </select>
               </div>
+              
+              {/* NEW: Price Input */}
+              <div className="relative">
+                <div className={`absolute inset-0 bg-yellow-500 rounded-lg blur-sm transition-opacity duration-300 ${focusedField === 'price' ? 'opacity-20' : 'opacity-0'}`}></div>
+                <div className="relative flex items-center">
+                  <IndianRupee className="absolute left-3 w-4 h-4 text-gray-400 z-10" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="Price (0 for free)"
+                    className="auth-input relative pl-10"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    onFocus={() => setFocusedField('price')}
+                    onBlur={() => setFocusedField('')}
+                  />
+                </div>
+              </div>
+
               <div className="relative">
                 <label className="flex items-center gap-2 text-gray-400 text-sm mb-2">
                   <Upload className="w-4 h-4" />
@@ -426,11 +445,25 @@ const Admin = () => {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {songs?.map((e, i) => {
+              const songPrice = e.price ? parseFloat(e.price.toString()) : 0;
               return (
                 <div  
                   className="group relative backdrop-blur-xl bg-gray-900/60 border border-gray-800 p-4 rounded-xl shadow-lg hover:shadow-green-500/10 transition-all duration-300 hover:scale-105"
                   key={i}
                 >
+                  {/* NEW: Price Badge */}
+                  {songPrice > 0 && (
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10 flex items-center gap-1">
+                      <IndianRupee className="w-3 h-3" />
+                      {songPrice}
+                    </div>
+                  )}
+                  {songPrice === 0 && (
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10">
+                      FREE
+                    </div>
+                  )}
+
                   {e.thumbnail ? (
                     <div className="relative overflow-hidden rounded-lg mb-3">
                       <img
@@ -470,7 +503,6 @@ const Admin = () => {
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/50 rounded-lg transition-all duration-300 group/btn"
                     onClick={() => deleteSong(e.id)}
                   >
-                    
                     <Trash2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" />
                     <span className="text-sm font-semibold">Delete</span>
                   </button>

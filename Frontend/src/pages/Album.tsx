@@ -1,24 +1,46 @@
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import Layout from "../components/Layout"
 import { useSongData } from "../context/SongContext"
 import { useEffect } from "react"
 import Loading from "../components/Loading"
-import { FaBookmark, FaPlay } from "react-icons/fa"
+import { FaBookmark, FaPlay, FaShoppingCart } from "react-icons/fa"
 import { useUserData } from "../context/UserContext"
-
+import { useCart } from "../context/CartContext"
 
 const Album = () => {
     const {fetchAlbumsongs , albumSong , albumData , setIsPlaying , setSelectedSong , loading} = useSongData()
-
-    const {isAuth ,addToPlaylist} = useUserData()
-
+    const {isAuth ,addToPlaylist, user} = useUserData()
+    const { addToCart, isInCart } = useCart()
+    const navigate = useNavigate()
     const params = useParams<{id:string}>()
 
     useEffect(()=>{
         if(params.id){
         fetchAlbumsongs(params.id)}
-
     },[params.id])
+
+    const handlePlaySong = (songIdStr: string) => {
+      setSelectedSong(songIdStr)
+      setIsPlaying(true)
+    }
+
+    const handleAddToCart = (song: any) => {
+      if (!isAuth) {
+        navigate("/login")
+        return
+      }
+
+      const songPrice = song.price ? parseFloat(song.price.toString()) : 0
+      const songIdStr = String(song.id)
+
+      addToCart({
+        id: songIdStr,
+        title: song.title,
+        description: song.description,
+        thumbnail: song.thumbnail || "/download.jpg",
+        price: songPrice,
+      })
+    }
 
   return (
     <div>
@@ -46,25 +68,30 @@ const Album = () => {
                     {albumData.title}
                 </h2>
                 <h4 className="text-sm sm:text-base md:text-lg text-gray-400 leading-relaxed">{albumData.description}</h4>
-                
             </div>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 mt-6 sm:mt-8 md:mt-10 mb-3 sm:mb-4 pl-2 sm:pl-3 md:pl-4 text-xs sm:text-sm text-gray-400 font-semibold uppercase tracking-wider">
+            <div className="grid grid-cols-4 sm:grid-cols-5 mt-6 sm:mt-8 md:mt-10 mb-3 sm:mb-4 pl-2 sm:pl-3 md:pl-4 text-xs sm:text-sm text-gray-400 font-semibold uppercase tracking-wider">
                 <p> 
                     <b className="mr-3 sm:mr-4">Sl.no</b>
-                  
                 </p>
                 <p className="hidden sm:block">Description</p>
+                <p className="text-center">Price</p>
                 <p className="text-center">Actions</p>
             </div>
         
              <hr className="border-gray-800/50 mb-2" />
     {
         albumSong && albumSong.map((song, index) => {
+            const songPrice = song.price ? parseFloat(song.price.toString()) : 0
+            const songIdStr = String(song.id)
+            const hasPurchased = user?.purchasedSongs?.includes(songIdStr)
+            const isFree = songPrice === 0
+            const inCart = isInCart(songIdStr)
+
             return (
                 <div 
-                    className="grid grid-cols-3 sm:grid-cols-4 mt-2 mb-2 pl-2 sm:pl-3 md:pl-4 py-2 sm:py-3 text-gray-300 hover:bg-gradient-to-r hover:from-purple-900/20 hover:via-pink-900/10 hover:to-cyan-900/20 cursor-pointer rounded-lg backdrop-blur-sm border border-transparent hover:border-purple-500/20 transition-all duration-300 group" 
+                    className="grid grid-cols-4 sm:grid-cols-5 mt-2 mb-2 pl-2 sm:pl-3 md:pl-4 py-2 sm:py-3 text-gray-300 hover:bg-gradient-to-r hover:from-purple-900/20 hover:via-pink-900/10 hover:to-cyan-900/20 cursor-pointer rounded-lg backdrop-blur-sm border border-transparent hover:border-purple-500/20 transition-all duration-300 group" 
                     key={index}
                 >
                     <p className="text-white flex items-center text-xs sm:text-sm md:text-base">
@@ -72,7 +99,7 @@ const Album = () => {
                             {index + 1}
                         </b>
                         <img 
-                            src={song.thumbnail ? song.thumbnail : "/downlaod.jpg"} 
+                            src={song.thumbnail ? song.thumbnail : "/download.jpg"} 
                             className="inline w-8 h-8 sm:w-10 sm:h-10 mr-2 sm:mr-3 md:mr-5 rounded-md shadow-lg shadow-black/50 border border-purple-500/30 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300"
                             alt="" 
                         />
@@ -84,28 +111,50 @@ const Album = () => {
                         {song.description.slice(0,30)}....
                     </p>
 
+                    <p className="flex justify-center items-center">
+                        {isFree ? (
+                            <span className="text-xs font-bold text-cyan-400">FREE</span>
+                        ) : hasPurchased ? (
+                            <span className="text-xs font-bold text-green-400">OWNED</span>
+                        ) : inCart ? (
+                            <span className="text-xs font-bold text-blue-400">IN CART</span>
+                        ) : (
+                            <span className="text-xs font-bold text-yellow-400">₹ {songPrice}</span>
+                        )}
+                    </p>
+
                     <p className="flex justify-center items-center gap-3 sm:gap-4 md:gap-5">
                         {isAuth && 
                             <button 
                                 className="text-sm sm:text-base md:text-[15px] text-purple-400 hover:text-cyan-400 transition-all duration-300 hover:scale-125 p-2 rounded-lg hover:bg-purple-500/10" 
-                                onClick={()=>{
-                                    addToPlaylist(song.id)
-                                }}
+                                onClick={()=> addToPlaylist(songIdStr)}
+                                title="Add to playlist"
                             >
                                 <FaBookmark />
                             </button>
                         }
 
-                        <button 
-                            className="text-sm sm:text-base md:text-[15px] bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 text-white p-2 rounded-full hover:from-purple-600 hover:via-pink-600 hover:to-cyan-600 transition-all duration-300 hover:scale-110 shadow-lg shadow-purple-500/30 hover:shadow-cyan-500/50" 
-                            onClick={()=>{
-                                setSelectedSong(song.id)
-                                setIsPlaying(true)
-                            }}
-                        >
-                            <FaPlay />
-                        </button>
-
+                        {isFree || hasPurchased ? (
+                            <button 
+                                className="text-sm sm:text-base md:text-[15px] bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 text-white p-2 rounded-full hover:from-purple-600 hover:via-pink-600 hover:to-cyan-600 transition-all duration-300 hover:scale-110 shadow-lg shadow-purple-500/30 hover:shadow-cyan-500/50" 
+                                onClick={() => handlePlaySong(songIdStr)}
+                                title="Play song"
+                            >
+                                <FaPlay />
+                            </button>
+                        ) : (
+                            <button 
+                                className={`text-sm sm:text-base md:text-[15px] ${
+                                    inCart 
+                                        ? 'bg-gradient-to-r from-blue-500 to-cyan-600' 
+                                        : 'bg-gradient-to-r from-yellow-500 to-orange-600'
+                                } text-white p-2 rounded-full hover:from-yellow-600 hover:to-orange-700 transition-all duration-300 hover:scale-110 shadow-lg shadow-yellow-500/30 hover:shadow-orange-500/50`}
+                                onClick={() => handleAddToCart(song)}
+                                title={inCart ? "Already in cart" : "Add to cart"}
+                            >
+                                <FaShoppingCart />
+                            </button>
+                        )}
                     </p>
                 </div>
             )

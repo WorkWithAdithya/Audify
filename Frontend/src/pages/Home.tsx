@@ -3,8 +3,6 @@ import { useSongData } from "../context/SongContext"
 import AlbumCard from "../components/AlbumCard";
 import SongCard from "../components/SongCard";
 
-
-
 const Home = () => {
   const {albums , songs} = useSongData()
   return (
@@ -29,7 +27,6 @@ const Home = () => {
           </div>
         </div>
 
-
         {/* Today's Hits Section */}
         <div className="mb-12">
           <div className="flex items-center gap-4 mb-6">
@@ -43,13 +40,19 @@ const Home = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-6">
             {
               songs?.map((e,i)=>{
-                return <SongCard key={i} image={e.thumbnail} name={e.title} description={e.description} id={e.id}/>
+                return <SongCard 
+                  key={i} 
+                  image={e.thumbnail} 
+                  name={e.title} 
+                  description={e.description} 
+                  id={e.id}
+                  price={e.price} 
+                />
               })
             }
           </div>
         </div>
       </Layout>
-      
     </div>
   )
 }
