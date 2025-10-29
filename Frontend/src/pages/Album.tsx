@@ -3,168 +3,221 @@ import Layout from "../components/Layout"
 import { useSongData } from "../context/SongContext"
 import { useEffect } from "react"
 import Loading from "../components/Loading"
-import { FaBookmark, FaPlay, FaShoppingCart } from "react-icons/fa"
+import { FaBookmark, FaPlay, FaShoppingCart, FaDownload } from "react-icons/fa"
 import { useUserData } from "../context/UserContext"
 import { useCart } from "../context/CartContext"
+import toast from "react-hot-toast"
 
 const Album = () => {
-    const {fetchAlbumsongs , albumSong , albumData , setIsPlaying , setSelectedSong , loading} = useSongData()
-    const {isAuth ,addToPlaylist, user} = useUserData()
-    const { addToCart, isInCart } = useCart()
-    const navigate = useNavigate()
-    const params = useParams<{id:string}>()
+  const { fetchAlbumsongs, albumSong, albumData, setIsPlaying, setSelectedSong, loading } = useSongData()
+  const { isAuth, addToPlaylist, user } = useUserData()
+  const { addToCart, isInCart } = useCart()
+  const navigate = useNavigate()
+  const params = useParams<{ id: string }>()
 
-    useEffect(()=>{
-        if(params.id){
-        fetchAlbumsongs(params.id)}
-    },[params.id])
+  useEffect(() => {
+    if (params.id) fetchAlbumsongs(params.id)
+  }, [params.id])
 
-    const handlePlaySong = (songIdStr: string) => {
-      setSelectedSong(songIdStr)
-      setIsPlaying(true)
-    }
+  const handlePlaySong = (songIdStr: string) => {
+    setSelectedSong(songIdStr)
+    setIsPlaying(true)
+  }
 
-    const handleAddToCart = (song: any) => {
-      if (!isAuth) {
-        navigate("/login")
-        return
+  const handleAddToCart = (song: any) => {
+    if (!isAuth) return navigate("/login")
+
+    const songPrice = song.price ? parseFloat(song.price.toString()) : 0
+    const songIdStr = String(song.id)
+
+    addToCart({
+      id: songIdStr,
+      title: song.title,
+      description: song.description,
+      thumbnail: song.thumbnail || "/download.jpg",
+      price: songPrice,
+    })
+  }
+
+  const handleDownload = async (song: any) => {
+    if (!isAuth) return navigate("/login")
+
+    const songIdStr = String(song.id)
+    const songPrice = song.price ? parseFloat(song.price.toString()) : 0
+    const hasPurchased = user?.purchasedSongs?.includes(songIdStr)
+
+    if (songPrice > 0 && !hasPurchased) return toast.error("Please purchase this song to download")
+
+    try {
+      toast.loading("Preparing download...")
+
+      if (!song.audio) {
+        toast.dismiss()
+        return toast.error("Audio file not available")
       }
 
-      const songPrice = song.price ? parseFloat(song.price.toString()) : 0
-      const songIdStr = String(song.id)
+      const link = document.createElement("a")
+      link.href = song.audio
+      link.download = `${song.title}.mp3`
+      link.target = "_blank"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
 
-      addToCart({
-        id: songIdStr,
-        title: song.title,
-        description: song.description,
-        thumbnail: song.thumbnail || "/download.jpg",
-        price: songPrice,
-      })
+      toast.dismiss()
+      toast.success(`Downloading ${song.title}...`)
+    } catch (error) {
+      toast.dismiss()
+      toast.error("Failed to download song")
+      console.error("Download error:", error)
     }
+  }
 
   return (
-    <div>
-      <Layout>{albumData && (
-        <>
-        {
-            loading? <Loading/> : <>
-            <div className="mt-6 sm:mt-8 md:mt-10 flex gap-4 sm:gap-6 md:gap-8 flex-col md:flex-row md:items-center">
-            {
-                albumData.thumbnail && ( 
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Subtle moving background */}
+      <div className="absolute inset-0">
+        <div className="absolute w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-3xl -top-32 -left-32 animate-pulse"></div>
+        <div className="absolute w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-3xl bottom-0 right-0 animate-pulse delay-1000"></div>
+      </div>
+
+      <Layout>
+        {albumData && (
+          <>
+            {loading ? (
+              <Loading />
+            ) : (
+              <div className="relative z-10 px-4 sm:px-6 md:px-10 py-10">
+                {/* Album header */}
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                  {albumData.thumbnail && (
                     <div className="relative group">
-                        <img 
-                            src={albumData.thumbnail} 
-                            className="w-40 sm:w-44 md:w-48 lg:w-56 rounded-xl shadow-2xl shadow-purple-900/50 border-2 border-purple-500/30 group-hover:border-cyan-500/50 transition-all duration-300 group-hover:scale-105 group-hover:shadow-cyan-500/50" 
-                            alt=""
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <img
+                        src={albumData.thumbnail}
+                        alt={albumData.title}
+                        className="w-40 sm:w-48 md:w-56 rounded-2xl shadow-2xl border border-purple-500/30 transition-transform duration-500 group-hover:scale-105 group-hover:border-cyan-500/50"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
-                )
-            }
+                  )}
 
-            <div className="flex flex-col gap-2 sm:gap-3">
-                <p className="text-xs sm:text-sm font-semibold text-purple-400 tracking-wider uppercase">Playlist</p>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent leading-tight">
-                    {albumData.title}
-                </h2>
-                <h4 className="text-sm sm:text-base md:text-lg text-gray-400 leading-relaxed">{albumData.description}</h4>
-            </div>
-            </div>
-
-            <div className="grid grid-cols-4 sm:grid-cols-5 mt-6 sm:mt-8 md:mt-10 mb-3 sm:mb-4 pl-2 sm:pl-3 md:pl-4 text-xs sm:text-sm text-gray-400 font-semibold uppercase tracking-wider">
-                <p> 
-                    <b className="mr-3 sm:mr-4">Sl.no</b>
-                </p>
-                <p className="hidden sm:block">Description</p>
-                <p className="text-center">Price</p>
-                <p className="text-center">Actions</p>
-            </div>
-        
-             <hr className="border-gray-800/50 mb-2" />
-    {
-        albumSong && albumSong.map((song, index) => {
-            const songPrice = song.price ? parseFloat(song.price.toString()) : 0
-            const songIdStr = String(song.id)
-            const hasPurchased = user?.purchasedSongs?.includes(songIdStr)
-            const isFree = songPrice === 0
-            const inCart = isInCart(songIdStr)
-
-            return (
-                <div 
-                    className="grid grid-cols-4 sm:grid-cols-5 mt-2 mb-2 pl-2 sm:pl-3 md:pl-4 py-2 sm:py-3 text-gray-300 hover:bg-gradient-to-r hover:from-purple-900/20 hover:via-pink-900/10 hover:to-cyan-900/20 cursor-pointer rounded-lg backdrop-blur-sm border border-transparent hover:border-purple-500/20 transition-all duration-300 group" 
-                    key={index}
-                >
-                    <p className="text-white flex items-center text-xs sm:text-sm md:text-base">
-                        <b className="mr-3 sm:mr-4 text-gray-500 group-hover:text-purple-400 transition-colors duration-300 text-xs sm:text-sm">
-                            {index + 1}
-                        </b>
-                        <img 
-                            src={song.thumbnail ? song.thumbnail : "/download.jpg"} 
-                            className="inline w-8 h-8 sm:w-10 sm:h-10 mr-2 sm:mr-3 md:mr-5 rounded-md shadow-lg shadow-black/50 border border-purple-500/30 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300"
-                            alt="" 
-                        />
-                        <span className="group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-cyan-400 group-hover:bg-clip-text transition-all duration-300 truncate">
-                            {song.title}
-                        </span>
+                  <div className="flex flex-col text-center md:text-left gap-3">
+                    <p className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
+                      Playlist
                     </p>
-                    <p className="text-xs sm:text-sm md:text-[15px] hidden sm:block text-gray-400 group-hover:text-gray-300 transition-colors duration-300 flex items-center truncate">
-                        {song.description.slice(0,30)}....
+                    <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent leading-tight">
+                      {albumData.title}
+                    </h2>
+                    <p className="text-gray-400 max-w-xl leading-relaxed">
+                      {albumData.description}
                     </p>
-
-                    <p className="flex justify-center items-center">
-                        {isFree ? (
-                            <span className="text-xs font-bold text-cyan-400">FREE</span>
-                        ) : hasPurchased ? (
-                            <span className="text-xs font-bold text-green-400">OWNED</span>
-                        ) : inCart ? (
-                            <span className="text-xs font-bold text-blue-400">IN CART</span>
-                        ) : (
-                            <span className="text-xs font-bold text-yellow-400">₹ {songPrice}</span>
-                        )}
-                    </p>
-
-                    <p className="flex justify-center items-center gap-3 sm:gap-4 md:gap-5">
-                        {isAuth && 
-                            <button 
-                                className="text-sm sm:text-base md:text-[15px] text-purple-400 hover:text-cyan-400 transition-all duration-300 hover:scale-125 p-2 rounded-lg hover:bg-purple-500/10" 
-                                onClick={()=> addToPlaylist(songIdStr)}
-                                title="Add to playlist"
-                            >
-                                <FaBookmark />
-                            </button>
-                        }
-
-                        {isFree || hasPurchased ? (
-                            <button 
-                                className="text-sm sm:text-base md:text-[15px] bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 text-white p-2 rounded-full hover:from-purple-600 hover:via-pink-600 hover:to-cyan-600 transition-all duration-300 hover:scale-110 shadow-lg shadow-purple-500/30 hover:shadow-cyan-500/50" 
-                                onClick={() => handlePlaySong(songIdStr)}
-                                title="Play song"
-                            >
-                                <FaPlay />
-                            </button>
-                        ) : (
-                            <button 
-                                className={`text-sm sm:text-base md:text-[15px] ${
-                                    inCart 
-                                        ? 'bg-gradient-to-r from-blue-500 to-cyan-600' 
-                                        : 'bg-gradient-to-r from-yellow-500 to-orange-600'
-                                } text-white p-2 rounded-full hover:from-yellow-600 hover:to-orange-700 transition-all duration-300 hover:scale-110 shadow-lg shadow-yellow-500/30 hover:shadow-orange-500/50`}
-                                onClick={() => handleAddToCart(song)}
-                                title={inCart ? "Already in cart" : "Add to cart"}
-                            >
-                                <FaShoppingCart />
-                            </button>
-                        )}
-                    </p>
+                  </div>
                 </div>
-            )
-        })
-    }
-        
-            </>
-        }
-        </>
-      )}</Layout>
+
+                {/* Song list header */}
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 mt-10 mb-4 text-gray-400 text-xs sm:text-sm uppercase font-semibold tracking-wider border-b border-gray-800 pb-2">
+                  <p>Sl.no</p>
+                  <p className="hidden sm:block">Description</p>
+                  <p className="text-center">Price</p>
+                  <p className="text-center">Actions</p>
+                </div>
+
+                {/* Song list */}
+                {albumSong?.map((song, index) => {
+                  const songPrice = song.price ? parseFloat(song.price.toString()) : 0
+                  const songIdStr = String(song.id)
+                  const hasPurchased = user?.purchasedSongs?.includes(songIdStr)
+                  const isFree = songPrice === 0
+                  const inCart = isInCart(songIdStr)
+
+                  return (
+                    <div
+                      key={index}
+                      className="grid grid-cols-4 sm:grid-cols-5 items-center text-gray-300 hover:bg-gradient-to-r hover:from-purple-900/20 hover:via-pink-900/10 hover:to-cyan-900/20 backdrop-blur-sm rounded-xl border border-transparent hover:border-purple-500/20 transition-all duration-300 py-3 px-2 sm:px-4 mb-2"
+                    >
+                      {/* Song index + title */}
+                      <div className="flex items-center gap-3 sm:gap-4 text-sm sm:text-base">
+                        <span className="text-gray-500 group-hover:text-purple-400">{index + 1}</span>
+                        <img
+                          src={song.thumbnail || "/download.jpg"}
+                          alt={song.title}
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-md border border-purple-500/30 group-hover:border-cyan-500/50 transition-all duration-300"
+                        />
+                        <span className="truncate group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-cyan-400 group-hover:bg-clip-text">
+                          {song.title}
+                        </span>
+                      </div>
+
+                      {/* Description */}
+                      <p className="hidden sm:block text-xs sm:text-sm text-gray-400 truncate">
+                        {song.description.slice(0, 40)}...
+                      </p>
+
+                      {/* Price */}
+                      <p className="flex justify-center text-xs font-bold">
+                        {isFree ? (
+                          <span className="text-cyan-400">FREE</span>
+                        ) : hasPurchased ? (
+                          <span className="text-green-400">OWNED</span>
+                        ) : inCart ? (
+                          <span className="text-blue-400">IN CART</span>
+                        ) : (
+                          <span className="text-yellow-400">₹{songPrice}</span>
+                        )}
+                      </p>
+
+                      {/* Actions */}
+                      <div className="flex justify-center items-center gap-3 sm:gap-4">
+                        {isAuth && (
+                          <button
+                            className="text-purple-400 hover:text-cyan-400 hover:scale-125 transition-all duration-300"
+                            onClick={() => addToPlaylist(songIdStr)}
+                            title="Add to playlist"
+                          >
+                            <FaBookmark />
+                          </button>
+                        )}
+
+                        {(isFree || hasPurchased) ? (
+                          <>
+                            <button
+                              onClick={() => handlePlaySong(songIdStr)}
+                              className="bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 p-2 rounded-full hover:scale-110 shadow-md hover:shadow-cyan-500/50 transition-all duration-300"
+                              title="Play song"
+                            >
+                              <FaPlay className="text-white" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDownload(song)}
+                              className="bg-gradient-to-r from-blue-500 to-cyan-600 p-2 rounded-full hover:scale-110 shadow-md hover:shadow-blue-500/50 transition-all duration-300"
+                              title="Download song"
+                            >
+                              <FaDownload className="text-white" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleAddToCart(song)}
+                            className={`p-2 rounded-full text-white transition-all duration-300 hover:scale-110 shadow-md ${
+                              inCart
+                                ? "bg-gradient-to-r from-blue-500 to-cyan-600 hover:shadow-cyan-500/40"
+                                : "bg-gradient-to-r from-yellow-500 to-orange-600 hover:shadow-yellow-500/40"
+                            }`}
+                            title={inCart ? "Already in cart" : "Add to cart"}
+                          >
+                            <FaShoppingCart />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </Layout>
     </div>
   )
 }

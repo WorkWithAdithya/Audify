@@ -66,7 +66,7 @@ const Register: React.FC = () => {
                                 <div className="relative group">
                                     <div className={`absolute inset-0 bg-green-500 rounded-md blur-sm transition-opacity duration-300 ${focusedField === 'name' ? 'opacity-30' : 'opacity-0'}`}></div>
                                     <div className="relative flex items-center">
-                                        <User className="absolute left-4 w-5 h-5 text-gray-400 z-10" />
+                                       
                                         <input
                                             type="text"
                                             placeholder="Enter your name"
@@ -89,7 +89,7 @@ const Register: React.FC = () => {
                                 <div className="relative group">
                                     <div className={`absolute inset-0 bg-green-500 rounded-md blur-sm transition-opacity duration-300 ${focusedField === 'email' ? 'opacity-30' : 'opacity-0'}`}></div>
                                     <div className="relative flex items-center">
-                                        <Mail className="absolute left-4 w-5 h-5 text-gray-400 z-10" />
+                                       
                                         <input
                                             type="email"
                                             placeholder="Enter your email"
@@ -112,7 +112,7 @@ const Register: React.FC = () => {
                                 <div className="relative group">
                                     <div className={`absolute inset-0 bg-green-500 rounded-md blur-sm transition-opacity duration-300 ${focusedField === 'password' ? 'opacity-30' : 'opacity-0'}`}></div>
                                     <div className="relative flex items-center">
-                                        <Lock className="absolute left-4 w-5 h-5 text-gray-400 z-10" />
+                                        
                                         <input
                                             type="password"
                                             placeholder="Enter your password"
