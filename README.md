@@ -1,12 +1,10 @@
-# Audify : Your hub for background music
 
 # 🎵 Audify - Your Hub for Background Music
 
 <div align="center">
 
-![Audify Logo](https://img.shields.io/badge/Audify-Music%20Platform-green?style=for-the-badge&logo=spotify)
 
-**A modern microservices-based music streaming platform built with React, Node.js, and cloud-native technologies**
+**A modern microservices-based audio streaming platform built with React, Node.js, and cloud-native technologies**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org/)
