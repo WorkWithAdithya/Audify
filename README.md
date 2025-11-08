@@ -472,6 +472,4 @@ Contributions are welcome! Please follow these steps:
 
 **⭐ Star this repository if you found it helpful!**
 
-Made with ❤️ by [Adithya](https://github.com/WorkWithAdithya)
-
 </div>
