@@ -1,0 +1,96 @@
+services:
+  # User Service
+  user-service:
+    build:
+      context: ./User-service
+      dockerfile: Dockerfile
+    image: audiffy-user-service
+    container_name: audiffy-user-service
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./User-service/.env
+    networks:
+      - audiffy-network
+    restart: unless-stopped
+
+  # Admin Service
+  admin-service:
+    build:
+      context: ./Admin-service
+      dockerfile: Dockerfile
+    image: audiffy-admin-service
+    container_name: audiffy-admin-service
+    ports:
+      - "7000:7000"
+    env_file:
+      - ./Admin-service/.env
+    environment:
+      - User_URL=http://user-service:5000
+    depends_on:
+      - user-service
+    networks:
+      - audiffy-network
+    restart: unless-stopped
+
+  # Song Service
+  song-service:
+    build:
+      context: "./Song service1"
+      dockerfile: Dockerfile
+    image: audiffy-song-service
+    container_name: audiffy-song-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - "./Song service1/.env"
+    environment:
+      - USER_SERVICE_URL=http://user-service:5000
+    depends_on:
+      - user-service
+    networks:
+      - audiffy-network
+    restart: unless-stopped
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./Payment-service
+      dockerfile: Dockerfile
+    image: audiffy-payment-service
+    container_name: audiffy-payment-service
+    ports:
+      - "9000:9000"
+    env_file:
+      - ./Payment-service/.env
+    environment:
+      - USER_SERVICE_URL=http://user-service:5000
+      - SONG_SERVICE_URL=http://song-service:8000
+    depends_on:
+      - user-service
+      - song-service
+    networks:
+      - audiffy-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    image: audiffy-frontend
+    container_name: audiffy-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - user-service
+      - admin-service
+      - song-service
+      - payment-service
+    networks:
+      - audiffy-network
+    restart: unless-stopped
+
+networks:
+  audiffy-network:
+    driver: bridge

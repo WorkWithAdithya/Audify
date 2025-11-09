@@ -1,0 +1,475 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: audiffy
+
+---
+# Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: audiffy-secrets
+  namespace: audiffy
+type: Opaque
+stringData:
+  MONGO_URI: "mongodb+srv://Adithya:Adithya01@audiffy.vssn3wn.mongodb.net/?retryWrites=true&w=majority&appName=Audiffy"
+  JWT_SEC: "asdfghjmvfgmnbvd"
+  DB_URL: "postgresql://neondb_owner:npg_FbhgXR4eZLA5@ep-falling-frost-adjen56o-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+  Cloud_Name: "dsmsparxo"
+  Cloud_Api_key: "933746843482196"
+  Cloud_Api_secret: "1387LW4iP5QB2MoUo-XGkE-iy-E"
+  Redis_Password: "UBWhdsKubtiGR9Hzu6QAwMre66KqDRbw"
+  RAZORPAY_KEY_ID: "rzp_test_RY2aK6CyNdLQn2"
+  RAZORPAY_KEY_SECRET: "b5HspcOIiPdLFOK3wTJb4gzX"
+  RAZORPAY_WEBHOOK_SECRET: "xwwQQemkZDG_K9v"
+
+---
+# User Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: audiffy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+      - name: user-service
+        image: audiffy-user-service:latest
+        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        ports:
+        - containerPort: 5000
+        env:
+        - name: PORT
+          value: "5000"
+        - name: NODE_ENV
+          value: "production"
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: MONGO_URI
+        - name: JWT_SEC
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: JWT_SEC
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# User Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: audiffy
+spec:
+  selector:
+    app: user-service
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP
+
+---
+# Admin Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-service
+  namespace: audiffy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-service
+  template:
+    metadata:
+      labels:
+        app: admin-service
+    spec:
+      containers:
+      - name: admin-service
+        image: audiffy-admin-service:latest
+        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        ports:
+        - containerPort: 7000
+        env:
+        - name: PORT
+          value: "7000"
+        - name: NODE_ENV
+          value: "production"
+        - name: User_URL
+          value: "http://user-service:5000"
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: DB_URL
+        - name: Cloud_Name
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: Cloud_Name
+        - name: Cloud_Api_key
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: Cloud_Api_key
+        - name: Cloud_Api_secret
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: Cloud_Api_secret
+        - name: Redis_Password
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: Redis_Password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 7000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 7000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Admin Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-service
+  namespace: audiffy
+spec:
+  selector:
+    app: admin-service
+  ports:
+  - port: 7000
+    targetPort: 7000
+  type: ClusterIP
+
+---
+# Song Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: song-service
+  namespace: audiffy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: song-service
+  template:
+    metadata:
+      labels:
+        app: song-service
+    spec:
+      containers:
+      - name: song-service
+        image: audiffy-song-service:latest
+        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PORT
+          value: "8000"
+        - name: NODE_ENV
+          value: "production"
+        - name: USER_SERVICE_URL
+          value: "http://user-service:5000"
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: DB_URL
+        - name: Redis_Password
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: Redis_Password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Song Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: song-service
+  namespace: audiffy
+spec:
+  selector:
+    app: song-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+# Payment Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: audiffy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: audiffy-payment-service:latest
+        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        ports:
+        - containerPort: 9000
+        env:
+        - name: PORT
+          value: "9000"
+        - name: NODE_ENV
+          value: "production"
+        - name: USER_SERVICE_URL
+          value: "http://user-service:5000"
+        - name: SONG_SERVICE_URL
+          value: "http://song-service:8000"
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: DB_URL
+        - name: RAZORPAY_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: RAZORPAY_KEY_ID
+        - name: RAZORPAY_KEY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: RAZORPAY_KEY_SECRET
+        - name: RAZORPAY_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: audiffy-secrets
+              key: RAZORPAY_WEBHOOK_SECRET
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Payment Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: audiffy
+spec:
+  selector:
+    app: payment-service
+  ports:
+  - port: 9000
+    targetPort: 9000
+  type: ClusterIP
+
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: audiffy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: audiffy-frontend:latest
+        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        ports:
+        - containerPort: 5173
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: VITE_USER_SERVICE_URL
+          value: "http://audiffy.local/api/user"
+        - name: VITE_ADMIN_SERVICE_URL
+          value: "http://audiffy.local/api/admin"
+        - name: VITE_SONG_SERVICE_URL
+          value: "http://audiffy.local/api/song"
+        - name: VITE_PAYMENT_SERVICE_URL
+          value: "http://audiffy.local/api/payment"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5173
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5173
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Frontend Service (LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: audiffy
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 5173
+  type: LoadBalancer
+
+---
+# Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audiffy-ingress
+  namespace: audiffy
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, Authorization"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: audiffy.local
+    http:
+      paths:
+      - path: /api/user(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: user-service
+            port:
+              number: 5000
+      - path: /api/admin(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: admin-service
+            port:
+              number: 7000
+      - path: /api/song(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: song-service
+            port:
+              number: 8000
+      - path: /api/payment(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: payment-service
+            port:
+              number: 9000
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
