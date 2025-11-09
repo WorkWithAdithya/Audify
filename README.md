@@ -31,7 +31,6 @@
 ### 👨‍💼 For Admins
 - **Content Management** - Upload and manage songs, albums, and thumbnails
 - **Dynamic Pricing** - Set custom prices or offer songs for free
-- **Analytics Dashboard** - Track sales, revenue, and user engagement
 - **Cloudinary Integration** - Efficient media storage and delivery
 - **Real-time Updates** - Instant cache invalidation with Redis
 
@@ -369,23 +368,23 @@ purchases {
 ### Run Locally (Without Docker)
 ```bash
 # User Service
-cd user-service
-npm install
+cd User-service
+tsc
 npm run dev
 
 # Admin Service
-cd admin-service
-npm install
+cd Admin-service
+tsc
 npm run dev
 
 # Song Service
-cd song-service
-npm install
+cd Song service1
+tsc
 npm run dev
 
 # Payment Service
-cd payment-service
-npm install
+cd Payment-service
+tsc
 npm run dev
 
 # Frontend
