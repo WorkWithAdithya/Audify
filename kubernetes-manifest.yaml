@@ -33,7 +33,7 @@ metadata:
   name: user-service
   namespace: audiffy
 spec:
-  replicas: 2
+  replicas: 1  # Reduced for Minikube
   selector:
     matchLabels:
       app: user-service
@@ -45,7 +45,7 @@ spec:
       containers:
       - name: user-service
         image: audiffy-user-service:latest
-        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        imagePullPolicy: Never
         ports:
         - containerPort: 5000
         env:
@@ -65,17 +65,18 @@ spec:
               key: JWT_SEC
         resources:
           requests:
+            memory: "128Mi"  # Reduced for Minikube
+            cpu: "100m"
+          limits:
             memory: "256Mi"
             cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
         livenessProbe:
           httpGet:
             path: /health
             port: 5000
           initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health
@@ -106,7 +107,7 @@ metadata:
   name: admin-service
   namespace: audiffy
 spec:
-  replicas: 2
+  replicas: 1  # Reduced for Minikube
   selector:
     matchLabels:
       app: admin-service
@@ -118,7 +119,7 @@ spec:
       containers:
       - name: admin-service
         image: audiffy-admin-service:latest
-        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        imagePullPolicy: Never
         ports:
         - containerPort: 7000
         env:
@@ -155,17 +156,18 @@ spec:
               key: Redis_Password
         resources:
           requests:
+            memory: "128Mi"  # Reduced for Minikube
+            cpu: "100m"
+          limits:
             memory: "256Mi"
             cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
         livenessProbe:
           httpGet:
             path: /health
             port: 7000
           initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health
@@ -196,7 +198,7 @@ metadata:
   name: song-service
   namespace: audiffy
 spec:
-  replicas: 3
+  replicas: 1  # Reduced for Minikube
   selector:
     matchLabels:
       app: song-service
@@ -208,7 +210,7 @@ spec:
       containers:
       - name: song-service
         image: audiffy-song-service:latest
-        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        imagePullPolicy: Never
         ports:
         - containerPort: 8000
         env:
@@ -230,17 +232,18 @@ spec:
               key: Redis_Password
         resources:
           requests:
+            memory: "128Mi"  # Reduced for Minikube
+            cpu: "100m"
+          limits:
             memory: "256Mi"
             cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
         livenessProbe:
           httpGet:
             path: /health
             port: 8000
           initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health
@@ -271,7 +274,7 @@ metadata:
   name: payment-service
   namespace: audiffy
 spec:
-  replicas: 2
+  replicas: 1  # Reduced for Minikube
   selector:
     matchLabels:
       app: payment-service
@@ -283,7 +286,7 @@ spec:
       containers:
       - name: payment-service
         image: audiffy-payment-service:latest
-        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        imagePullPolicy: Never
         ports:
         - containerPort: 9000
         env:
@@ -317,17 +320,18 @@ spec:
               key: RAZORPAY_WEBHOOK_SECRET
         resources:
           requests:
+            memory: "128Mi"  # Reduced for Minikube
+            cpu: "100m"
+          limits:
             memory: "256Mi"
             cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
         livenessProbe:
           httpGet:
             path: /health
             port: 9000
           initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health
@@ -358,7 +362,7 @@ metadata:
   name: frontend
   namespace: audiffy
 spec:
-  replicas: 2
+  replicas: 1  # Reduced for Minikube
   selector:
     matchLabels:
       app: frontend
@@ -370,7 +374,7 @@ spec:
       containers:
       - name: frontend
         image: audiffy-frontend:latest
-        imagePullPolicy: Never  # Changed from IfNotPresent for local images
+        imagePullPolicy: Never
         ports:
         - containerPort: 5173
         env:
@@ -386,17 +390,18 @@ spec:
           value: "http://audiffy.local/api/payment"
         resources:
           requests:
+            memory: "128Mi"  # Reduced for Minikube
+            cpu: "100m"
+          limits:
             memory: "256Mi"
             cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
         livenessProbe:
           httpGet:
             path: /
             port: 5173
           initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /
@@ -405,7 +410,7 @@ spec:
           periodSeconds: 5
 
 ---
-# Frontend Service (LoadBalancer)
+# Frontend Service (NodePort for Minikube)
 apiVersion: v1
 kind: Service
 metadata:
@@ -417,7 +422,8 @@ spec:
   ports:
   - port: 80
     targetPort: 5173
-  type: LoadBalancer
+    nodePort: 30080  # Fixed port for easy access
+  type: NodePort
 
 ---
 # Ingress
