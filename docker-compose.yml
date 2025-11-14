@@ -90,7 +90,8 @@ services:
     networks:
       - audiffy-network
     restart: unless-stopped
-
+    init: true
+    stop_grace_period: 10s
 networks:
   audiffy-network:
     driver: bridge
