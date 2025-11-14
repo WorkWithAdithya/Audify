@@ -14,16 +14,16 @@ metadata:
   namespace: audiffy
 type: Opaque
 stringData:
-  MONGO_URI: "mongodb+srv://Adithya:Adithya01@audiffy.vssn3wn.mongodb.net/?retryWrites=true&w=majority&appName=Audiffy"
+  MONGO_URI: "mongo_url"
   JWT_SEC: "asdfghjmvfgmnbvd"
-  DB_URL: "postgresql://neondb_owner:npg_FbhgXR4eZLA5@ep-falling-frost-adjen56o-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-  Cloud_Name: "dsmsparxo"
-  Cloud_Api_key: "933746843482196"
-  Cloud_Api_secret: "1387LW4iP5QB2MoUo-XGkE-iy-E"
-  Redis_Password: "UBWhdsKubtiGR9Hzu6QAwMre66KqDRbw"
-  RAZORPAY_KEY_ID: "rzp_test_RY2aK6CyNdLQn2"
-  RAZORPAY_KEY_SECRET: "b5HspcOIiPdLFOK3wTJb4gzX"
-  RAZORPAY_WEBHOOK_SECRET: "xwwQQemkZDG_K9v"
+  DB_URL: "neon_postgres_url"
+  Cloud_Name: "cloud_name"
+  Cloud_Api_key: "cloud_api_key"
+  Cloud_Api_secret: "cloud_api_secret"
+  Redis_Password: "redis_password"
+  RAZORPAY_KEY_ID: "razorpay_key_id"
+  RAZORPAY_KEY_SECRET: "razorpay_secret"
+  RAZORPAY_WEBHOOK_SECRET: "razorpay_webhook_url"
 
 ---
 # User Service Deployment
