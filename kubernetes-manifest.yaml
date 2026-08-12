@@ -15,7 +15,7 @@ metadata:
 type: Opaque
 stringData:
   MONGO_URI: "mongo_url"
-  JWT_SEC: "asdfghjmvfgmnbvd"
+  JWT_SEC: ""
   DB_URL: "neon_postgres_url"
   Cloud_Name: "cloud_name"
   Cloud_Api_key: "cloud_api_key"
