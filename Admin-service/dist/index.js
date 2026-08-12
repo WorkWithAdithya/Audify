@@ -9,8 +9,8 @@ dotenv.config();
 export const redisClient = redis.createClient({
     password: process.env.Redis_Password || "",
     socket: {
-        host: "redis-17220.crce217.ap-south-1-1.ec2.redns.redis-cloud.com",
-        port: 17220,
+        host: "microsolid-uplifting-kick-11675.db.redis.io",
+        port: 11365,
     }
 });
 redisClient.connect().then(() => {

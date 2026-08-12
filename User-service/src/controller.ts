@@ -59,7 +59,6 @@ export const loginUser = TryCatch(async (req, res) => {
   const { email, password } = req.body;
   const normalizedEmail = normEmail(email);
 
-  // Because password is select:false in model, explicitly select it here
   const user = await User.findOne({ email: normalizedEmail }).select("+password");
 
   if (!user) {
@@ -92,7 +91,8 @@ export const loginUser = TryCatch(async (req, res) => {
 export const addToPlaylist = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const userId = req.user?._id;
-    const songId = req.params.id;
+    // ✅ Fix: cast to string
+    const songId = req.params.id as string;
 
     if (!songId) {
       res.status(400).json({
@@ -110,8 +110,9 @@ export const addToPlaylist = TryCatch(
       return;
     }
 
-    if (user.playlist.includes(songId)) {
-      const index = user.playlist.indexOf(songId);
+    // ✅ Fix: cast songId as string in all array operations
+    if (user.playlist.includes(songId as string)) {
+      const index = user.playlist.indexOf(songId as string);
       user.playlist.splice(index, 1);
       await user.save();
 
@@ -121,7 +122,7 @@ export const addToPlaylist = TryCatch(
       return;
     }
 
-    user.playlist.push(songId);
+    user.playlist.push(songId as string);
     await user.save();
 
     res.json({
@@ -130,7 +131,7 @@ export const addToPlaylist = TryCatch(
   }
 );
 
-// NEW: Get user profile (for middleware in other services)
+// Get user profile (for middleware in other services)
 export const getMyProfile = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const user = req.user;
@@ -146,11 +147,12 @@ export const getMyProfile = TryCatch(
   }
 );
 
-// NEW: Add purchased song to user (called by Payment Service)
-// (kept your original behavior: 400 if already purchased)
+// Add purchased song to user (called by Payment Service)
 export const addPurchasedSong = TryCatch(
   async (_req: AuthenticatedRequest, res) => {
-    const { userId, songId } = _req.body;
+    // ✅ Fix: explicitly cast to string
+    const userId = _req.body.userId as string;
+    const songId = _req.body.songId as string;
 
     if (!userId || !songId) {
       res.status(400).json({
@@ -168,7 +170,6 @@ export const addPurchasedSong = TryCatch(
       return;
     }
 
-    // Check if already purchased
     if (user.purchasedSongs.includes(songId)) {
       res.status(400).json({
         message: "Song already purchased",
@@ -186,11 +187,12 @@ export const addPurchasedSong = TryCatch(
   }
 );
 
-// NEW: Check if user has purchased a song
+// Check if user has purchased a song
 export const checkPurchase = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const userId = req.user?._id;
-    const { songId } = req.params;
+    // ✅ Fix: cast to string
+    const songId = req.params.songId as string;
 
     if (!userId) {
       res.status(401).json({ message: "User not authenticated" });
@@ -209,7 +211,7 @@ export const checkPurchase = TryCatch(
       return;
     }
 
-    const hasPurchased = user.purchasedSongs.includes(songId as string);
+    const hasPurchased = user.purchasedSongs.includes(songId);
 
     res.json({
       hasPurchased,
@@ -218,7 +220,7 @@ export const checkPurchase = TryCatch(
   }
 );
 
-// NEW: Get all purchased songs
+// Get all purchased songs
 export const getPurchasedSongs = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const userId = req.user?._id;
